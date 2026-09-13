@@ -1,0 +1,23 @@
+# python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+.env
+.DS_Store
+
+# model/cache files
+.cache/
+huggingface/
+*.safetensors
+
+# benchmark results
+results/raw/*
+results/processed/*
+results/figures/*
+
+# # profiling outputs
+# profiling/nsys/*
+# profiling/ncu/*
+
