@@ -1,0 +1,11 @@
+name: exp1a_environment
+
+model: Qwen/Qwen3-0.6B
+
+validation:
+  expected_gpu_count: 1
+  expected_gpu_name: NVIDIA GeForce RTX 3090
+
+server:
+  host: 127.0.0.1
+  port: 18000

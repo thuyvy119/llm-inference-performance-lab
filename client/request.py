@@ -1,87 +1,156 @@
+# Client for sending streaming completion requests to a vLLM server
+from __future__ import annotations
 import json
 import time
+from typing import Any
 import httpx
-from pathlib import Path
 
-SERVER_URL = "http://localhost:8080"
-MODEL = "Qwen/Qwen3-0.6B"
+class InferenceClient:
+    def __init__(self, base_url: str, timeout: float = 120.0) -> None:
+        self.base_url = base_url.rstrip("/")
+        self.timeout = timeout
 
-PROMPT = "Explain the difference between GPU and CPU in simple terms."
-MAX_TOKENS = 128
-TEMPERATURE = 0.0
+    def generate(self, model: str, prompt: str, max_tokens: int, temperature: float, stream: bool = True) -> dict[str, Any]:
+        url = f"{self.base_url}/v1/chat/completions"
+        payload = {
+            "model": model,
+            "messages": [
+                {
+                    "role": "user",
+                    "content": prompt,
+                }
+            ],
+            "max_tokens": max_tokens,
+            "temperature": temperature,
+            "stream": stream,
+        }
 
-def send_request():
-    url = f"{SERVER_URL}/v1/chat/completions"
-    payload = {
-        "model": MODEL,
-        "messages": [
-            {
-                "role": "user",
-                "content": PROMPT
+        if stream:
+            payload["stream_options"] = {
+                "include_usage": True,
             }
-        ],
-        "max_tokens": MAX_TOKENS,
-        "temperature": TEMPERATURE,
-        "stream": True,
-    }
 
-    request_start = time.perf_counter()
-    first_token_time = None
-    # token_count = 0
-    last_token_time = None
-    generated_chunk = []
+        request_start = time.perf_counter()
 
-    with httpx.stream("POST", url, json=payload, timeout=300) as response:
-        response.raise_for_status()
-        for line in response.iter_lines():
-            if not line or not line.startswith(b"data:"):
-                continue
-            data = line[len("data: "):].strip()
-            if data == b"[DONE]":
-                break
-            chunk = json.loads(data)
-            choices = chunk.get("choices", [])
-            if not choices:
-                continue
-            delta = choices[0].get("delta", {})
-            content = delta.get("content")
-            if content is None:
-                continue
-            now = time.perf_counter()
-            if first_token_time is None:
-                first_token_time = now
-            # token_count += 1
-            last_token_time = now
-            generated_chunk.append(content)
-            
-    request_end = time.perf_counter()
+        first_output_time: float | None = None
+        response_text_parts: list[str] = []
+        usage: dict[str, Any] | None = None
 
-    ttft = (first_token_time - request_start) if first_token_time else None
-    e2e_latency = request_end - request_start
-    decode_time = (last_token_time - first_token_time) if first_token_time and last_token_time else None
-    
-    result = {
-        "model": MODEL,
-        "prompt": PROMPT,
-        "max_tokens": MAX_TOKENS,
-        "temperature": TEMPERATURE,
-        "ttft_s": ttft,
-        "decode_time_seconds": decode_time,
-        "e2e_latency_seconds": e2e_latency,
-        "num_streamed_chunks": len(generated_chunk),
-        "output_text": "".join(generated_chunk),
-    }
-    
-    return result
+        with httpx.Client(timeout=self.timeout) as client:
+            with client.stream("POST", url, json=payload) as response:
+                response.raise_for_status()
 
-def main():
-    result = send_request()
-    print("\n=== Experiment 01: Single Request ===")
-    print(f"TTFT:          {result['ttft_seconds']:.4f} s")
-    print(f"E2E latency:   {result['e2e_latency_seconds']:.4f} s")
-    print(f"Decode time:   {result['decode_time_seconds']:.4f} s")
-    print(f"Chunks:        {result['num_stream_chunks']}")
-    print(f"\nOutput:\n{result['output_text']}")
-    
-if __name__ == "__main__":
-    main()
+                if not stream:
+                    data = response.json()
+                    request_end = time.perf_counter()
+                    choice = data["choices"][0]
+                    message = choice.get("message", {})
+                    response_text = message.get("content", "")
+                    usage = data.get("usage")
+
+                    return self._build_result(
+                        request_start=request_start,
+                        first_output_time=None,
+                        request_end=request_end,
+                        response_text=response_text,
+                        usage=usage,
+                    )
+
+                for line in response.iter_lines():
+                    if not line:
+                        continue
+
+                    if not line.startswith("data:"):
+                        continue
+
+                    data = line[len("data:"):].strip()
+
+                    if data == "[DONE]":
+                        break
+
+                    chunk = json.loads(data)
+
+                    # the final chunk may contain usage information
+                    if chunk.get("usage") is not None:
+                        usage = chunk["usage"]
+
+                    choices = chunk.get("choices", [])
+
+                    if not choices:
+                        continue
+
+                    delta = choices[0].get("delta", {})
+
+                    content = delta.get("content")
+
+                    if content:
+                        if first_output_time is None:
+                            first_output_time = time.perf_counter()
+
+                        response_text_parts.append(content)
+
+                request_end = time.perf_counter()
+
+        response_text = "".join(response_text_parts)
+
+        return self._build_result(
+            request_start=request_start,
+            first_output_time=first_output_time,
+            request_end=request_end,
+            response_text=response_text,
+            usage=usage,
+        )
+
+    @staticmethod
+    def _build_result(
+        request_start: float,
+        first_output_time: float | None,
+        request_end: float,
+        response_text: str,
+        usage: dict[str, Any] | None,
+    ) -> dict[str, Any]:
+
+        ttft_seconds: float | None = None
+        decode_duration_seconds: float | None = None
+        tpot_seconds: float | None = None
+        output_tokens_per_second: float | None = None
+
+        if first_output_time is not None:
+            ttft_seconds = first_output_time - request_start
+            decode_duration_seconds = request_end - first_output_time
+
+        input_tokens = None
+        output_tokens = None
+
+        if usage is not None:
+            input_tokens = usage.get("prompt_tokens")
+            output_tokens = usage.get("completion_tokens")
+
+        if (
+            decode_duration_seconds is not None
+            and output_tokens is not None
+            and output_tokens > 1
+        ):
+            tpot_seconds = (decode_duration_seconds / (output_tokens - 1))
+
+        if (
+            decode_duration_seconds is not None
+            and output_tokens is not None
+            and output_tokens > 0
+        ):
+            output_tokens_per_second = (output_tokens / decode_duration_seconds)
+
+        return {
+            "response_text": response_text,
+            "request_start": request_start,
+            "first_output_time": first_output_time,
+            "request_end": request_end,
+            "ttft_seconds": ttft_seconds,
+            "decode_duration_seconds": decode_duration_seconds,
+            "e2e_latency_seconds": request_end - request_start,
+            "input_tokens": input_tokens,
+            "output_tokens": output_tokens,
+            "tpot_seconds": tpot_seconds,
+            "output_tokens_per_second": output_tokens_per_second,
+        }
+        

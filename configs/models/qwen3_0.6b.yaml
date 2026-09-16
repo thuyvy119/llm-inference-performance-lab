@@ -1,7 +1,5 @@
-model: Qwen/Qwen3-0.6B
-
-dtype: auto
-
-max_model_len: 4096
-
-gpu_memory_utilization: 0.90
+model:
+  name: Qwen/Qwen3-0.6B
+  dtype: auto
+  max_model_len: 4096
+  gpu_memory_utilization: 0.90

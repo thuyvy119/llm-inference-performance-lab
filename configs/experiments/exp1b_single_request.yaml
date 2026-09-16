@@ -1,0 +1,13 @@
+name: exp1b_single_request
+
+model: Qwen/Qwen3-0.6B
+
+workload:
+  num_requests: 1
+  concurrency: 1
+
+request:
+  prompt: "Explain the difference between GPU and CPU in simple terms."
+  max_tokens: 128
+  temperature: 0.7
+  stream: true
