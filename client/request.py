@@ -4,13 +4,12 @@ import json
 import time
 from typing import Any
 import httpx
-
 class InferenceClient:
     def __init__(self, base_url: str, timeout: float = 120.0) -> None:
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
 
-    def generate(self, model: str, prompt: str, max_tokens: int, temperature: float, stream: bool = True) -> dict[str, Any]:
+    def generate(self, model: str, prompt: str, max_tokens: int, temperature: float, stream: bool = True, enable_thinking: bool = False, top_p: float | None = None, top_k: int | None = None, min_p: float | None = None) -> dict[str, Any]:
         url = f"{self.base_url}/v1/chat/completions"
         payload = {
             "model": model,
@@ -23,8 +22,20 @@ class InferenceClient:
             "max_tokens": max_tokens,
             "temperature": temperature,
             "stream": stream,
+            "chat_template_kwargs": {
+                "enable_thinking": enable_thinking,
+            }
         }
+        
+        if top_p is not None:
+            payload["top_p"] = top_p
 
+        if top_k is not None:
+            payload["top_k"] = top_k
+
+        if min_p is not None:
+            payload["min_p"] = min_p
+        
         if stream:
             payload["stream_options"] = {
                 "include_usage": True,

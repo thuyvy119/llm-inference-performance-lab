@@ -25,15 +25,23 @@ def main():
     print(f"Prompt: {request_config['prompt']}")
     print(f"Max tokens: {request_config['max_tokens']}")
     print(f"Temperature: {request_config['temperature']}")
+    print(f"Thinking enabled: {request_config['enable_thinking']}")
+    print(f"Top-p: {request_config['top_p']}")
+    print(f"Top-k: {request_config['top_k']}")
+    print(f"Min-p: {request_config['min_p']}")
 
     result = client.generate(
         model=model,
         prompt=request_config["prompt"],
         max_tokens=request_config["max_tokens"],
         temperature=request_config["temperature"],
+        top_p=request_config["top_p"],
+        top_k=request_config["top_k"],
+        min_p=request_config["min_p"],
+        enable_thinking=request_config["enable_thinking"],
         stream=request_config["stream"],
     )
-
+    
     print("\n=== Results ===")
     print(f"TTFT: "
         f"{result['ttft_seconds']:.4f} seconds"
@@ -65,6 +73,8 @@ def main():
 
     print("\n=== Response ===")
     print(result["response_text"])
+    
+    
 
 if __name__ == "__main__":
     main()

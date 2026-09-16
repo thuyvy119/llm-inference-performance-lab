@@ -40,6 +40,12 @@ def main():
     print(f"Model: {model}")
     print(f"Requests: {num_requests}")
     print(f"Concurrency: {concurrency}")
+    print(f"Max tokens: {request_config['max_tokens']}")
+    print(f"Temperature: {request_config['temperature']}")
+    print(f"Thinking enabled: {request_config['enable_thinking']}")
+    print(f"Top-p: {request_config['top_p']}")
+    print(f"Top-k: {request_config['top_k']}")
+    print(f"Min-p: {request_config['min_p']}")
 
     gpu_sampler = GPUSampler(
         output_path=GPU_METRICS_PATH,
@@ -62,6 +68,10 @@ def main():
                 prompt=request_config["prompt"],
                 max_tokens=request_config["max_tokens"],
                 temperature=request_config["temperature"],
+                top_p=request_config["top_p"],
+                top_k=request_config["top_k"],
+                min_p=request_config["min_p"],
+                enable_thinking=request_config["enable_thinking"],
                 stream=request_config["stream"],
             )
 
@@ -111,6 +121,10 @@ def main():
             "prompt": request_config["prompt"],
             "max_tokens": request_config["max_tokens"],
             "temperature": request_config["temperature"],
+            "top_p": request_config["top_p"],
+            "top_k": request_config["top_k"],
+            "min_p": request_config["min_p"],
+            "enable_thinking": request_config["enable_thinking"],
             "stream": request_config["stream"],
         },
         "server": {
@@ -135,8 +149,8 @@ def main():
     for metric, statistics in summary.items():
         print(f"\n{metric}:")
         for name, value in statistics.items():
-                print(f"  {name}: "
-                    f"{value:.6f}s")
+            print(f"  {name}: "
+                f"{value:.6f}s")
 
     print(f"\nResults saved to: {OUTPUT_PATH}")
 

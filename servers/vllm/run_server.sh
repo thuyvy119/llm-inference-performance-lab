@@ -4,7 +4,7 @@ set -euo pipefail
 
 MODEL="Qwen/Qwen3-0.6B"
 HOST="127.0.0.1"
-PORT="8000"
+PORT="18000"
 MAX_MODEL_LEN="4096"
 GPU_MEMORY_UTILIZATION="0.90"
 

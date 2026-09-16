@@ -93,8 +93,6 @@ class GPUSampler:
         return self.samples
 
     def _write_csv(self):
-        if not self.samples:
-            return
         self.output_path.parent.mkdir(parents=True, exist_ok=True)
 
         fieldnames = [
