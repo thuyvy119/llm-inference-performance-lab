@@ -1,0 +1,36 @@
+{
+  "python": {
+    "version": "3.12.14",
+    "executable": "/workspace/llm-inference-performance-lab/.venv/bin/python"
+  },
+  "pytorch": {
+    "version": "2.13.0+cu130",
+    "cuda_available": true,
+    "cuda_version": "13.0"
+  },
+  "gpus": [
+    {
+      "index": 0,
+      "name": "NVIDIA GeForce RTX 3090",
+      "memory_gb": 23.56
+    }
+  ],
+  "vllm": {
+    "installed": true,
+    "version": "0.29.0"
+  },
+  "validation": {
+    "cuda_available": true,
+    "gpu_count": {
+      "expected": 1,
+      "actual": 1,
+      "passed": true
+    },
+    "gpu_name": {
+      "expected": "NVIDIA GeForce RTX 3090",
+      "actual": "NVIDIA GeForce RTX 3090",
+      "passed": true
+    },
+    "vllm_installed": true
+  }
+}
