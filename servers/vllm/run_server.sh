@@ -19,3 +19,5 @@ exec vllm serve "$MODEL" \
     --dtype auto \
     --max-model-len $MAX_MODEL_LEN \
     --gpu-memory-utilization $GPU_MEMORY_UTILIZATION
+    --tensor-parallel-size 1 \
+    --default-chat-template-kwargs '{"enable_thinking": false}'
