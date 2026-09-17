@@ -1,0 +1,41 @@
+{
+  "experiment": {
+    "name": "exp1b_single_request",
+    "model": "Qwen/Qwen3-0.6B",
+    "num_requests": 1,
+    "concurrency": 1
+  },
+  "workload": {
+    "prompt": "Explain the difference between GPU and CPU in simple terms.",
+    "max_tokens": 128,
+    "temperature": 0.7,
+    "top_p": 0.8,
+    "top_k": 20,
+    "min_p": 0.0,
+    "enable_thinking": false,
+    "stream": true
+  },
+  "server": {
+    "base_url": "http://127.0.0.1:18000"
+  },
+  "gpu_metrics": {
+    "path": "results/raw/exp1b_gpu_metrics.csv",
+    "sampling_interval_seconds": 0.05,
+    "num_samples": 6
+  },
+  "results": [
+    {
+      "response_text": "GPU (Graphics Processing Unit) and CPU (Central Processing Unit) are both types of computer hardware, but they serve different roles in a computer's performance. Here's a simple explanation:\n\n- **CPU (Central Processing Unit)**:  \n  This is the brain of the computer. It handles all the tasks the computer needs to do, like running applications, processing data, and managing the computer's operations. It's what you use to control what your computer does, like typing, playing games, or watching videos.\n\n- **GPU (Graphics Processing Unit)**:  \n  This is the \"brain\" of the computer. It handles tasks like",
+      "request_start": 156605.293503104,
+      "first_output_time": 156605.401629398,
+      "request_end": 156605.773848889,
+      "ttft_seconds": 0.10812629398424178,
+      "decode_duration_seconds": 0.3722194909933023,
+      "e2e_latency_seconds": 0.4803457849775441,
+      "input_tokens": 24,
+      "output_tokens": 128,
+      "tpot_seconds": 0.0029308621338055302,
+      "output_tokens_per_second": 343.88312030200274
+    }
+  ]
+}
