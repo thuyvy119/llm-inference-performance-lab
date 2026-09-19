@@ -1,4 +1,4 @@
-# Experiment 01 - vLLM Single-GPU Baseline
+# Experiment 1 - vLLM Single-GPU Baseline
 
 This experiment establishes a controlled baseline for LLM inference performance using vLLM on a single NVIDIA RTX 3090.
 Experiment 1 uses **Qwen3-0.6B with thinking/reasoning explicitly disabled** so that the baseline measures ordinary prompt-to-answer serving behavior without introducing reasoning as an additional workload variable.

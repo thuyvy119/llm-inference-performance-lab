@@ -1,0 +1,41 @@
+name: exp2_concurrency
+
+model: Qwen/Qwen3-0.6B
+
+server:
+  host: 127.0.0.1
+  port: 18000
+
+workload:
+  requests_per_concurrency: 64
+
+  concurrency_levels:
+    - 1
+    - 2
+    - 4
+    - 8
+    - 16
+    - 32
+
+  prompt: "Explain the difference between GPU and CPU in simple terms."
+
+  max_tokens: 128
+  temperature: 0.7
+  top_p: 0.8
+  top_k: 20
+  min_p: 0.0
+  enable_thinking: false
+  stream: true
+
+warmup:
+  enabled: true
+  requests_per_concurrency: 8
+  discard_results: true
+
+gpu_metrics:
+  enabled: true
+  sample_interval_seconds: 0.5
+  output_path: "results/raw/exp2_gpu_metrics.csv"
+
+results:
+  output_path: "results/raw/exp2_concurrency.csv"

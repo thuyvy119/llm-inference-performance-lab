@@ -153,6 +153,7 @@ def main():
                 f"{value:.6f}s")
 
     print(f"\nResults saved to: {OUTPUT_PATH}")
-
+    print(f"GPU metrics saved to: {GPU_METRICS_PATH}")
+    
 if __name__ == "__main__":
     main()

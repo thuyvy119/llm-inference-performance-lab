@@ -1,4 +1,4 @@
-# Experiment 01 - vLLM Single-GPU Baseline
+# Experiment 1 - vLLM Single-GPU Baseline
 
 ## Objective
 
