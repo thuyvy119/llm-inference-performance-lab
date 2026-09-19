@@ -21,3 +21,4 @@ exec vllm serve "$MODEL" \
     --gpu-memory-utilization $GPU_MEMORY_UTILIZATION
     --tensor-parallel-size 1 \
     --default-chat-template-kwargs '{"enable_thinking": false}'
+
