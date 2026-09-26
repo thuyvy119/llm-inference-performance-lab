@@ -32,12 +32,11 @@ def main():
     if concurrency != 1:
         raise ValueError("Experiment 1c requires concurrency=1")
 
-    client = InferenceClient(base_url=base_url)
-
     print("Experiment 1c: Repeated Sequential Baseline")
     print("=" * 50)
     print(f"Server: {base_url}")
     print(f"Model: {model}")
+    print(f"Prompt: {request_config['prompt']}")   
     print(f"Requests: {num_requests}")
     print(f"Concurrency: {concurrency}")
     print(f"Max tokens: {request_config['max_tokens']}")
@@ -46,6 +45,7 @@ def main():
     print(f"Top-p: {request_config['top_p']}")
     print(f"Top-k: {request_config['top_k']}")
     print(f"Min-p: {request_config['min_p']}")
+    print(f"Ignore EOS: {request_config.get('ignore_eos', False)}")
 
     gpu_sampler = GPUSampler(
         output_path=GPU_METRICS_PATH,
@@ -54,61 +54,42 @@ def main():
 
     results = []
 
-    gpu_sampler.start()
+    with InferenceClient(base_url=base_url) as client:
+        gpu_sampler.start()
+        try:
+            for request_id in range(1, num_requests + 1):
+                print(f"\nRunning request {request_id}/{num_requests}...")
+                
+                result = client.generate(
+                    model=model,
+                    max_tokens=request_config["max_tokens"],
+                    temperature=request_config["temperature"],
+                    top_p=request_config["top_p"],
+                    top_k=request_config["top_k"],
+                    min_p=request_config["min_p"],
+                    enable_thinking=request_config["enable_thinking"],
+                    stream=request_config["stream"],
+                    ignore_eos=request_config.get("ignore_eos", False)
+                )
 
-    try:
-        for request_id in range(1, num_requests + 1):
-            print(
-                f"\nRunning request "
-                f"{request_id}/{num_requests}..."
-            )
+                result["request_id"] = request_id
+                results.append(result)
 
-            result = client.generate(
-                model=model,
-                prompt=request_config["prompt"],
-                max_tokens=request_config["max_tokens"],
-                temperature=request_config["temperature"],
-                top_p=request_config["top_p"],
-                top_k=request_config["top_k"],
-                min_p=request_config["min_p"],
-                enable_thinking=request_config["enable_thinking"],
-                stream=request_config["stream"],
-            )
+                print(f"  TTFT: {result['ttft_seconds']:.4f}s")
+                print(f"  E2E: {result['e2e_latency_seconds']:.4f}s")
+                print(f"  Output tokens: {result['output_tokens']}")
 
-            result["request_id"] = request_id
-            results.append(result)
-
-            print(
-                f"  TTFT: "
-                f"{result['ttft_seconds']:.4f}s"
-            )
-            print(
-                f"  E2E: "
-                f"{result['e2e_latency_seconds']:.4f}s"
-            )
-            print(
-                f"  Output tokens: "
-                f"{result['output_tokens']}"
-            )
-
-    finally:
-        gpu_samples = gpu_sampler.stop()
+        finally:
+            gpu_samples = gpu_sampler.stop()
 
     metrics_to_summarize = ["ttft_seconds", "tpot_seconds", "e2e_latency_seconds"]
     summary = {}
 
     for metric in metrics_to_summarize:
-        valid_results = [
-            result
-            for result in results
-            if result.get(metric) is not None
-        ]
+        valid_results = [result for result in results if result.get(metric) is not None]
 
         if valid_results:
-            summary[metric] = summarize(
-                valid_results,
-                metric,
-            )
+            summary[metric] = summarize(valid_results, metric)
 
     output = {
         "experiment": {
@@ -118,7 +99,7 @@ def main():
             "concurrency": concurrency,
         },
         "workload": {
-            "prompt": request_config["prompt"],
+            "prompt_template": request_config["prompt"],
             "max_tokens": request_config["max_tokens"],
             "temperature": request_config["temperature"],
             "top_p": request_config["top_p"],
@@ -126,15 +107,14 @@ def main():
             "min_p": request_config["min_p"],
             "enable_thinking": request_config["enable_thinking"],
             "stream": request_config["stream"],
+            "ignore_eos": request_config.get("ignore_eos", False)
         },
         "server": {
             "base_url": base_url,
         },
         "gpu_metrics": {
             "path": str(GPU_METRICS_PATH),
-            "sampling_interval_seconds": (
-                GPU_SAMPLING_INTERVAL_SECONDS
-            ),
+            "sampling_interval_seconds": (GPU_SAMPLING_INTERVAL_SECONDS),
             "num_samples": len(gpu_samples),
         },
         "results": results,
@@ -149,8 +129,7 @@ def main():
     for metric, statistics in summary.items():
         print(f"\n{metric}:")
         for name, value in statistics.items():
-            print(f"  {name}: "
-                f"{value:.6f}s")
+            print(f"  {name}: {value:.6f}s")
 
     print(f"\nResults saved to: {OUTPUT_PATH}")
     print(f"GPU metrics saved to: {GPU_METRICS_PATH}")

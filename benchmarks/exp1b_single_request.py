@@ -26,8 +26,6 @@ def main():
     model = config["model"]
     request_config = config["request"]
 
-    client = InferenceClient(base_url=base_url)
-
     print("Experiment 1b: Single Request")
     print("=" * 40)
     print(f"Server: {base_url}")
@@ -39,27 +37,29 @@ def main():
     print(f"Top-p: {request_config['top_p']}")
     print(f"Top-k: {request_config['top_k']}")
     print(f"Min-p: {request_config['min_p']}")
+    print(f"Ignore EOS: {request_config.get('ignore_eos', False)}")
 
     gpu_sampler = GPUSampler(
         output_path=GPU_METRICS_PATH,
         interval_seconds=GPU_SAMPLING_INTERVAL_SECONDS,
     )
 
-    gpu_sampler.start()
-    try:
-        result = client.generate(
-            model=model,
-            prompt=request_config["prompt"],
-            max_tokens=request_config["max_tokens"],
-            temperature=request_config["temperature"],
-            top_p=request_config["top_p"],
-            top_k=request_config["top_k"],
-            min_p=request_config["min_p"],
-            enable_thinking=request_config["enable_thinking"],
-            stream=request_config["stream"],
-        )
-    finally:
-        gpu_samples = gpu_sampler.stop()
+    with InferenceClient(base_url=base_url) as client:
+        gpu_sampler.start()
+        try:
+            result = client.generate(
+                model=model,
+                max_tokens=request_config["max_tokens"],
+                temperature=request_config["temperature"],
+                top_p=request_config["top_p"],
+                top_k=request_config["top_k"],
+                min_p=request_config["min_p"],
+                enable_thinking=request_config["enable_thinking"],
+                stream=request_config["stream"],
+                ignore_eos=request_config.get("ignore_eos", False),
+            )
+        finally:
+            gpu_samples = gpu_sampler.stop()
 
     
     print("\n=== Results ===")
@@ -69,10 +69,7 @@ def main():
         print("TTFT: unavailable")
 
     if result["decode_duration_seconds"] is not None:
-        print(
-            f"Decode duration: "
-            f"{result['decode_duration_seconds']:.4f} seconds"
-        )
+        print(f"Decode duration: {result['decode_duration_seconds']:.4f} seconds")
     else:
         print("Decode duration: unavailable")
 
@@ -87,9 +84,7 @@ def main():
 
     if result["output_tokens_per_second"] is not None:
         print(
-            f"Output throughput: "
-            f"{result['output_tokens_per_second']:.2f} tokens/s"
-        )
+            f"Output throughput: {result['output_tokens_per_second']:.2f} tokens/s")
     else:
         print("Output throughput: unavailable")
 
@@ -113,6 +108,7 @@ def main():
             "min_p": request_config["min_p"],
             "enable_thinking": request_config["enable_thinking"],
             "stream": request_config["stream"],
+            "ignore_eos": request_config.get("ignore_eos", False),
         },
         "server": {
             "base_url": base_url,

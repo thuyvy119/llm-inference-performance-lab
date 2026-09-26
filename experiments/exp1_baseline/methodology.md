@@ -63,8 +63,8 @@ Therefore, reasoning mode is controlled as follows:
 ## Workload
 
 The same prompt is used for the baseline requests:
-
-> Explain the difference between GPU and CPU in simple terms.
+ 
+ > Explain the difference between GPU and CPU in simple terms.
 
 ### Request parameters
 
@@ -74,12 +74,12 @@ The same prompt is used for the baseline requests:
 * `top_k`: 20
 * `min_p`: 0.0
 * `enable_thinking`: false
+* `ignore_eos`: true
 * streaming: enabled
 
 The request configuration is kept fixed across Experiments 1b and 1c.
-
+`ignore_eos` is set to `true` so that generation always continues to `max_tokens` regardless of whether the model samples an end-of-sequence token early. Without this, `output_tokens` would vary per request even under identical config (temperature=0.7 makes EOS a sampling outcome, not a fixed point), which would make `max_tokens` a ceiling rather than a controlled value — undermining any later comparison across experiments that assumes output length is fixed.
 Streaming is enabled so that the client can measure the time at which the first generated output is received.
-
 When streaming, usage information is requested from the server so that input and output token counts are obtained from the API rather than inferred from the number of streaming chunks.
 
 ## Experiment 1a - Environment Validation
@@ -140,6 +140,7 @@ The results are saved as:
 ```text
 results/raw/exp1b_single_request.json
 results/raw/exp1b_gpu_metrics.csv
+servers/vllm/last_launch.json
 ```
 
 ## Experiment 1c — Repeated Sequential Baseline

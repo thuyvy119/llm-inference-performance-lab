@@ -100,13 +100,21 @@ min_p       = 0.0
 
 Keeping these parameters constant prevents generation configuration from becoming an uncontrolled workload variable.
 
-## 10. Why `max_tokens = 128`?
+## 10. Why `max_tokens = 128` and why `ignore_eos = true`??
 
-The baseline limits generated output to 128 tokens.
-This keeps individual requests bounded while providing a sufficiently long decode phase to observe generation behavior.
-Some responses may naturally terminate before reaching the limit. Therefore, actual output token count is recorded for every request.
+The baseline limits generated output to 128 tokens.Combined with `ignore_eos = true` (see Section 11 below), this makes output length a genuinely controlled variable rather than a ceiling — every successful request generates exactly 128 tokens. This matters for later experiments (particularly the planned output-length sweep) that need `output_tokens` to be the value actually set, not a sampling-dependent outcome.
 
-## 11. Why GPU Sampling at Approximately 50 ms?
+## 11. Why `ignore_eos = true`?
+
+At `temperature = 0.7` with `top_p = 0.8, top_k = 20`, the token sampled at each decode step — including whether it happens to be the end-of-sequence token — is stochastic. Without `ignore_eos`, two requests with identical config can legitimately produce very different `output_tokens` counts (e.g. 40 vs 115), purely from where sampling hit
+EOS. Since `decode_duration`, `E2E latency`, and (to a lesser extent, since it's per-token-normalized) `TPOT` are direct functions of how many tokens were actually generated, this would make output length an uncontrolled confound riding along with every other comparison.
+
+Setting `ignore_eos = true` forces decoding to continue to `max_tokens` regardless of EOS, so `output_tokens == max_tokens` deterministically.
+Note this does not disable sampling generally, temperature/top_p/top_k still govern which token is chosen at each step; `ignore_eos` only prevents the EOS token specifically from ending generation early.
+
+Reference: https://docs.vllm.ai/api/vllm/sampling_params.htm
+
+## 12. Why GPU Sampling at Approximately 50 ms?
 
 GPU monitoring is performed as a time series rather than as a single snapshot.
 
@@ -119,7 +127,7 @@ Approximately 50-ms sampling provides a coarse view of:
 The sampling interval is not intended to provide kernel-level timing.
 More detailed GPU behavior will be studied later using Nsight Systems and Nsight Compute.
 
-## 12. Controlled Variables
+## 13. Controlled Variables
 
 The following variables remain fixed across Experiments 1b and 1c:
 * model
@@ -135,16 +143,3 @@ The following variables remain fixed across Experiments 1b and 1c:
 
 The primary difference between 1b and 1c is the number of requests.
 
-## 13. Independent Workload Variables for Future Experiments
-
-Experiment 1 establishes the baseline before changing additional variables.
-
-Planned variables include:
-* concurrency
-* input length
-* output length
-* reasoning mode
-* serving framework
-* GPU profiling configuration
-* multi-GPU execution
-These variables will be introduced in later experiments rather than being mixed into the initial baseline.

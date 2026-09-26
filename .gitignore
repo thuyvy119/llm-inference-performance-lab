@@ -12,6 +12,9 @@ venv/
 huggingface/
 *.safetensors
 
+# servers
+servers/vllm/snapshots/*.json
+
 # benchmark results
 results/raw/*
 results/processed/*
