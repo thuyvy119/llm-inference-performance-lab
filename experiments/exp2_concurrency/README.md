@@ -13,11 +13,22 @@ The experiment focuses on the relationship between:
 * GPU utilization.
 
 Experiment 1 established the single-request and repeated sequential baseline at concurrency 1. Experiment 2 extends that baseline by increasing the number of simultaneously active requests while keeping the model, hardware, request configuration, and server configuration fixed.
+
 The primary independent variable is **request concurrency**.
 
 ## Research Question
 
 > How does increasing request concurrency affect per-request latency, system throughput, and GPU utilization when serving Qwen/Qwen3-0.6B with vLLM on a single NVIDIA RTX 3090?
+
+## Relationship to Experiment 1
+
+The concurrency = 1 condition in this experiment uses the same workload,
+same server configuration, and — as of this experiment — the same
+absence of per-condition warm-up as Experiment 1c's repeated baseline.
+The two should be directly comparable. A material discrepancy between
+Experiment 1c's summary statistics and this experiment's concurrency = 1
+condition is a signal to investigate before trusting the rest of the
+sweep.
 
 ## Experimental Conditions
 
@@ -34,53 +45,52 @@ The benchmark evaluates six concurrency levels:
 
 For each concurrency level:
 
-1. Start with 8 warm-up requests.
-2. Discard all warm-up results.
-3. Reset the benchmark timer and GPU measurement state.
-4. Execute 64 measured requests while maintaining the target concurrency.
-5. Record all measured request-level and system-level metrics.
-6. Stop measurement after the final measured request completes.
-7. Proceed to the next concurrency level.
+1. Start the GPU sampler.
+2. Start the benchmark timer.
+3. Execute 64 requests using a rolling scheduler at the target concurrency.
+4. Record all request-level and system-level metrics.
+5. Stop measurement after the final request completes.
+6. Proceed to the next concurrency level.
+
+There is no per-condition warm-up (see design.md, "One-Time
+Server-Readiness Warm-Up"). A single warm-up is run manually once, after
+the server starts and before any experiment — including this one —
+begins. It is not part of this experiment's measured protocol.
 
 The vLLM server is not restarted between concurrency levels.
 
 ## Request Counts
 
-Each concurrency condition contains:
-
-* 8 warm-up requests
-* 64 measured requests
-
-Therefore:
+Each concurrency condition contains 64 measured requests.
 
 ```text
-6 concurrency levels × 8 warm-up requests = 48 warm-up request
 6 concurrency levels × 64 measured requests = 384 measured requests
-Total requests sent = 432
 ```
 
-Only the 384 measured requests contribute to the experiment's reported results.
+All 384 requests contribute to the experiment's reported results — there
+is no separate warm-up count to exclude.
 
 ## Target Environment
 
 | Component                     | Configuration           |
-| ----------------------------- | ----------------------- |
-| Model                         | Qwen/Qwen3-0.6B         |
-| GPU                           | NVIDIA GeForce RTX 3090 |
-| GPU count                     | 1                       |
-| Tensor parallelism            | 1                       |
-| vLLM                          | 0.29.0                  |
-| Max model length              | 4096                    |
-| GPU memory utilization target | 0.90                    |
-| Reasoning                     | Disabled                |
-| Concurrency levels            | 1, 2, 4, 8, 16, 32      |
-| Warm-up requests              | 8 per condition         |
-| Measured requests             | 64 per condition        |
-| Streaming                     | Enabled                 |
+| ------------------------------ | ------------------------ |
+| Model                          | Qwen/Qwen3-0.6B          |
+| GPU                             | NVIDIA GeForce RTX 3090  |
+| GPU count                       | 1                        |
+| Tensor parallelism              | 1                        |
+| vLLM                             | 0.29.0                  |
+| Max model length                 | 4096                    |
+| GPU memory utilization target    | 0.90                     |
+| Automatic prefix caching         | Disabled                 |
+| Reasoning                        | Disabled                 |
+| Concurrency levels                | 1, 2, 4, 8, 16, 32      |
+| Measured requests per condition   | 64                       |
+| Warm-up                          | One-time, server-level, outside this experiment |
+| Streaming                        | Enabled                  |
 
 ## Fixed Request Configuration
 
-The request workload remains identical to Experiment 01:
+The request workload remains identical to Experiment 1:
 
 ```text
 Prompt:
@@ -93,35 +103,44 @@ top_k: 20
 min_p: 0.0
 enable_thinking: false
 stream: true
+ignore_eos: true
 ```
 
-The purpose is to isolate the effect of concurrency rather than simultaneously changing the workload.
+`ignore_eos: true` ensures every successful request generates exactly
+128 output tokens, so output length does not vary across requests or
+concurrency levels as an uncontrolled confound — see Experiment 1
+design.md for the full rationale.
+
+Automatic prefix caching is disabled server-side, consistent with
+Experiment 1, so that every request's prefill is measured cold rather
+than as a cache hit against a previous request's identical prompt.
+
+The purpose is to isolate the effect of concurrency rather than
+simultaneously changing the workload.
 
 ## Concurrency Definition
 
 For this experiment, concurrency `N` means:
 > At most `N` requests are simultaneously in flight.
-The benchmark uses a rolling concurrency model rather than fixed request batches. For example, at concurrency 4, four requests may initially be active. When one request completes, the benchmark immediately schedules another request, maintaining up to four active requests until all 64 measured requests have completed.
-Thus, concurrency controls the maximum number of simultaneously active requests rather than defining fixed request waves.
+
+The benchmark uses a rolling concurrency model rather than fixed request
+batches, implemented as an `asyncio.Semaphore(N)` guarding a fixed set of
+request tasks (`benchmarks/runner.py::run_concurrent_workload`). At
+concurrency 4, four requests may initially be active. When one request
+completes, the benchmark immediately schedules another, maintaining up
+to four active requests until all 64 measured requests have completed.
+
+Thus, concurrency controls the maximum number of simultaneously active
+requests rather than defining fixed request waves.
 
 ## Measurement Window
 
-Warm-up and measurement are strictly separated.
-
-For each concurrency condition:
-
 ```text
-8 warm-up requests
-        ↓
-discard warm-up results
-        ↓
-reset benchmark state
-        ↓
 start GPU sampling
         ↓
 start benchmark timer
         ↓
-64 measured requests
+64 measured requests (rolling scheduler)
         ↓
 last measured request completes
         ↓
@@ -129,14 +148,6 @@ stop benchmark timer
         ↓
 stop GPU sampling
 ```
-
-Warm-up time is excluded from:
-
-* benchmark duration,
-* request throughput,
-* output token throughput,
-* latency statistics, and
-* saved GPU measurements.
 
 ## Primary Metrics
 
