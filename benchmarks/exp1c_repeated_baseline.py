@@ -69,7 +69,7 @@ def main():
                     min_p=request_config["min_p"],
                     enable_thinking=request_config["enable_thinking"],
                     stream=request_config["stream"],
-                    ignore_eos=request_config.get("ignore_eos", False)
+                    ignore_eos=request_config.get("ignore_eos", False),
                 )
 
                 result["request_id"] = request_id

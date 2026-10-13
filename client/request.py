@@ -5,7 +5,7 @@ import time
 from typing import Any
 import httpx
 
-def build_result(request_start: float, first_output_time: float | None, request_end: float, response_text: str, usage: dict[str, Any] | None) -> dict[str, Any]:
+def build_result(request_start: float, first_output_time: float | None, request_end: float, response_text: str, usage: dict[str, Any] | None,) -> dict[str, Any]:
     ttft_seconds: float | None = None
     decode_duration_seconds: float | None = None
     tpot_seconds: float | None = None
@@ -48,7 +48,7 @@ def build_result(request_start: float, first_output_time: float | None, request_
         "output_tokens_per_second": output_tokens_per_second,
     }
 
-def build_payload(model: str, prompt: str, max_tokens: int, temperature: float, stream: bool, enable_thinking: bool, top_p: float | None, top_k: int | None, min_p: float | None, ignore_eos: bool) -> dict[str, Any]:
+def build_payload(model: str, prompt: str, max_tokens: int, temperature: float, stream: bool, enable_thinking: bool, top_p: float | None, top_k: int | None, min_p: float | None, ignore_eos: bool,) -> dict[str, Any]:
     payload = {
         "model": model,
         "messages": [
@@ -92,7 +92,7 @@ class InferenceClient:
     def __exit__(self, *exc_info) -> None:
         self.close()
     
-    def generate(self, model: str, prompt: str, max_tokens: int, temperature: float, stream: bool = True, enable_thinking: bool = False, top_p: float | None = None, top_k: int | None = None, min_p: float | None = None, ignore_eos: bool = False) -> dict[str, Any]:
+    def generate(self, model: str, prompt: str, max_tokens: int, temperature: float, stream: bool = True, enable_thinking: bool = False, top_p: float | None = None, top_k: int | None = None, min_p: float | None = None, ignore_eos: bool = False,) -> dict[str, Any]:
         url = f"{self.base_url}/v1/chat/completions"
         payload = build_payload(model, prompt, max_tokens, temperature, stream, enable_thinking, top_p, top_k, min_p, ignore_eos)
         
@@ -166,7 +166,7 @@ class AsyncInferenceClient:
     async def __aexit__(self, *exc_info: Any) -> None:
         await self.aclose()
     
-    async def generate(self, model: str, prompt: str, max_tokens: int, temperature: float, stream: bool = True, enable_thinking: bool = False, top_p: float | None = None, top_k: int | None = None, min_p: float | None = None, ignore_eos: bool = False) -> dict[str, Any]:
+    async def generate(self, model: str, prompt: str, max_tokens: int, temperature: float, stream: bool = True, enable_thinking: bool = False, top_p: float | None = None, top_k: int | None = None, min_p: float | None = None, ignore_eos: bool = False,) -> dict[str, Any]:
         url = f"{self.base_url}/v1/chat/completions"
         payload = build_payload(model, prompt, max_tokens, temperature, stream, enable_thinking, top_p, top_k, min_p, ignore_eos)
         request_start = time.perf_counter()

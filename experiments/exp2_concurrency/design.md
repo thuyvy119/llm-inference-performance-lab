@@ -79,7 +79,7 @@ R6 starts
 
 The benchmark does not wait for all four requests to finish before scheduling replacements.
 This prevents the benchmark driver from introducing artificial idle gaps between request groups.
-Implementation: an `asyncio.Semaphore(N)` wraps a fixed list of request coroutines, dispatched via `asyncio.gather`. This gives the rolling behavior described above directly — no separate scheduling logic was needed beyond the semaphore itself.
+Implementation: an `asyncio.Semaphore(N)` wraps a fixed list of request coroutines, dispatched via `asyncio.gather`. This gives the rolling behavior described above directly, no separate scheduling logic was needed beyond the semaphore itself.
 
 ## Decision 6 — Request-Level and System-Level Metrics Are Separate
 
