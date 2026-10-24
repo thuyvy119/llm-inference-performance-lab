@@ -2,30 +2,21 @@ from __future__ import annotations
 import asyncio
 import time
 from client.request import AsyncInferenceClient
-from typing import Any
+from benchmarks.common import build_generate_kwargs
 
 # duplicate 1 request config N times
-def uniform_requests(request_configs: dict[str, Any], num_requests: int):
+def uniform_requests(request_configs, num_requests):
     return [dict(request_configs) for _ in range(num_requests)]
 
 
-async def run_concurrent_workload(client: AsyncInferenceClient, model: str, request_configs: list[dict[str, Any]], concurrency: int, ):
+async def run_concurrent_workload(client: AsyncInferenceClient, model, request_configs, concurrency):
     semaphore = asyncio.Semaphore(concurrency)
     results = []
     
-    async def _run_one(request_id: int, request_config: dict[str, Any]):
+    async def _run_one(request_id, request_config):
         async with semaphore:
             try:
-                res = await client.generate(model=model,
-                                            prompt=request_config["prompt"],
-                                            max_tokens=request_config["max_tokens"],
-                                            temperature=request_config["temperature"],
-                                            top_p=request_config["top_p"],
-                                            top_k=request_config["top_k"],
-                                            min_p=request_config["min_p"],
-                                            enable_thinking=request_config.get("enable_thinking", False),
-                                            stream=request_config.get("stream", True),
-                                            ignore_eos=request_config.get("ignore_eos", False),)
+                res = await client.generate(model=model, **build_generate_kwargs(request_config),)
                 res["request_id"] = request_id
                 res["success"] = True
             except Exception as e:
