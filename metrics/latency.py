@@ -1,8 +1,7 @@
 from __future__ import annotations
 from statistics import mean
-from typing import Any
 
-def percentile(values: list[float], percentile_value: float) -> float:
+def percentile(values, percentile_value):
     if not values:
         raise ValueError("Cannot calculate percentile of empty data.")
 
@@ -15,7 +14,7 @@ def percentile(values: list[float], percentile_value: float) -> float:
 
     return (sorted_values[lower] + weight * (sorted_values[upper] - sorted_values[lower]))
 
-def summarize(results: list[dict[str, Any]], metric_name: str) -> dict[str, float]:
+def summarize(results, metric_name):
     values = [
         result[metric_name]
         for result in results
@@ -34,3 +33,12 @@ def summarize(results: list[dict[str, Any]], metric_name: str) -> dict[str, floa
         "p95": percentile(values, 95),
         "p99": percentile(values, 99),
     }
+
+LATENCY_METRICS = ["ttft_seconds", "tpot_seconds", "e2e_latency_seconds"]
+def summarize_latency(results):
+    summary = {}
+    for metric in LATENCY_METRICS:
+        valid_results = [result for result in results if result.get(metric) is not None]
+        if valid_results:
+            summary[metric] = summarize(valid_results, metric)
+    return summary

@@ -1,16 +1,7 @@
 from pathlib import Path
 import yaml
 
-def load_yaml(path: str) -> dict:
-    """
-    Load a YAML file and return its contents as a dictionary.
-
-    Args:
-        path (str): The path to the YAML file.
-
-    Returns:
-        The parsed YAML content as a dictionary.
-    """
+def load_yaml(path):
     path = Path(path)
     if not path.exists():
         raise FileNotFoundError(f"Configuration file not found: {path}")

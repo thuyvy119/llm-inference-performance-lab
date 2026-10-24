@@ -4,10 +4,9 @@ import subprocess
 import time
 from pathlib import Path
 from threading import Event, Thread
-from typing import Any
 
 class GPUSampler:
-    def __init__(self, output_path: str | Path, interval_seconds: float = 0.05):
+    def __init__(self, output_path, interval_seconds = 0.05):
         self.output_path = Path(output_path)
         self.interval_seconds = interval_seconds
         self.samples: list[dict[str, Any]] = []
@@ -15,7 +14,7 @@ class GPUSampler:
         self._thread: Thread | None = None
 
     # collect one sample from every visible GPU
-    def sample_once(self) -> list[dict[str, Any]]:
+    def sample_once(self):
         command = [
             "nvidia-smi",
             "--query-gpu="
@@ -58,8 +57,7 @@ class GPUSampler:
 
         return samples
 
-    def _run(self) -> None:
-        """Continuously collect GPU samples."""
+    def _run(self):
         while not self._stop_event.is_set():
             try:
                 samples = self.sample_once()
