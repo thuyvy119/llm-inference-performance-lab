@@ -6,7 +6,7 @@ from client.request import AsyncInferenceClient
 from configs.loader import load_yaml
 from benchmarks.runner import uniform_requests, run_concurrent_workload
 
-SERVER_CONFIG_PATH = Path("configs/experiments/exp1a_environment.yaml")
+SERVER_CONFIG_PATH = Path("configs/server.yaml")
 
 async def main_async(num_requests: int, concurrency: int):
     server_config = load_yaml(SERVER_CONFIG_PATH)

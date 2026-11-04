@@ -6,7 +6,7 @@ from metrics.gpu import GPUSampler
 from benchmarks.common import build_generate_kwargs, get_base_url, build_gpu_metrics_record, print_experiment_header, save_json
 
 CONFIG_PATH = Path("configs/experiments/exp1b_single_request.yaml")
-SERVER_CONFIG_PATH = Path("configs/experiments/exp1a_environment.yaml")
+SERVER_CONFIG_PATH = Path("configs/server.yaml")
 
 OUTPUT_PATH = Path("results/raw/exp1b_single_request.json")
 GPU_METRICS_PATH = Path("results/raw/exp1b_gpu_metrics.csv")

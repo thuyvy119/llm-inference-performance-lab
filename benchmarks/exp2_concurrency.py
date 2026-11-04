@@ -12,7 +12,7 @@ from metrics.throughput import compute_throughput_metrics
 
 
 CONFIG_PATH = Path("configs/experiments/exp2_concurrency.yaml")
-SERVER_CONFIG_PATH = Path("configs/experiments/exp1a_environment.yaml")
+SERVER_CONFIG_PATH = Path("configs/server.yaml")
 OUTPUT_PATH = Path("results/raw/exp2_concurrency.json")
 
 def gpu_metrics_path(concurrency: int):

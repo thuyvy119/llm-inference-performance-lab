@@ -27,7 +27,7 @@ async def run_concurrent_workload(client: AsyncInferenceClient, model, request_c
     asyncio.gather(
         *(_run_one(i, cfg) for i, cfg in enumerate(request_configs, start=1))
     )
-    wall_lock = time.perf_counter() - start
+    wall_clock = time.perf_counter() - start
     results.sort(key=lambda r: r["request_id"])
-    return results, wall_lock
+    return results, wall_clock
     

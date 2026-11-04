@@ -1,9 +1,5 @@
 """
-Validate the software and GPU environment for Experiment 1.
-
-This script does not benchmark performance. It collects environment
-information and checks it against the assumptions defined in the
-Experiment 1a configuration file
+This script does not benchmark performance. It collects environment information and checks it against the assumptions defined in the experiment 1a configuration file
 """
 
 from __future__ import annotations
@@ -18,15 +14,7 @@ from configs.loader import load_yaml
 CONFIG_PATH = Path("configs/experiments/exp1a_environment.yaml")
 
 
-def collect_environment(config: dict) -> dict:
-    """
-    Collect environment information and validation results.
-    Args:
-        config: Experiment 1a configuration.
-
-    Returns:
-        Dictionary containing environment information and checks.
-    """
+def collect_environment(config):
     environment = {
         "python": {"version": platform.python_version(), "executable": sys.executable,},
         "pytorch": {"version": torch.__version__, 
@@ -107,7 +95,7 @@ def collect_environment(config: dict) -> dict:
     return environment
 
 # print the collected environment info
-def print_environment(environment: dict) -> None:
+def print_environment(environment):
     print("Experiment 01 Environment Validation")
     print("=" * 40)
     print("\n=== Python ===")
@@ -174,7 +162,7 @@ def print_environment(environment: dict) -> None:
     )
 
 # Load configuration, collect environment and print results
-def main() -> None:
+def main():
     config = load_yaml(CONFIG_PATH)
     environment = collect_environment(config)
     print_environment(environment)

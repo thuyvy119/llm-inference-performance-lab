@@ -8,7 +8,7 @@ from benchmarks.common import build_generate_kwargs, build_gpu_metrics_record, g
 
 
 CONFIG_PATH = Path("configs/experiments/exp1c_repeated_baseline.yaml")
-SERVER_CONFIG_PATH = Path("configs/experiments/exp1a_environment.yaml")
+SERVER_CONFIG_PATH = Path("configs/server.yaml")
 
 GPU_METRICS_PATH = Path("results/raw/exp1c_gpu_metrics.csv")
 GPU_SAMPLING_INTERVAL_SECONDS = 0.05

@@ -77,8 +77,7 @@ class MockHandler(BaseHTTPRequestHandler):
         """Suppress default HTTP server logging."""
 
 
-def run_server() -> None:
-    """Start the mock server."""
+def run_server():
     server = HTTPServer(
         ("127.0.0.1", 18000),
         MockHandler,

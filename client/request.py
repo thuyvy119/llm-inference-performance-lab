@@ -77,19 +77,19 @@ def build_payload(model: str, prompt: str, max_tokens: int, temperature: float, 
     return payload
 
 class InferenceClient:
-    def __init__(self, base_url: str, timeout: float = 120.0, max_connections: int = 64) -> None:
+    def __init__(self, base_url: str, timeout: float = 120.0, max_connections: int = 64):
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
         limits = httpx.Limits(max_connections=max_connections, max_keepalive_connections=max_connections)
         self._client = httpx.Client(timeout=self.timeout, limits=limits)
     
-    def close(self) -> None:
+    def close(self):
         self._client.close()
         
     def __enter__(self) -> "InferenceClient":
         return self
     
-    def __exit__(self, *exc_info) -> None:
+    def __exit__(self, *exc_info):
         self.close()
     
     def generate(self, model: str, prompt: str, max_tokens: int, temperature: float, stream: bool = True, enable_thinking: bool = False, top_p: float | None = None, top_k: int | None = None, min_p: float | None = None, ignore_eos: bool = False,) -> dict[str, Any]:

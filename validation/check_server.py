@@ -1,6 +1,5 @@
 """
 Validate the vLLM server for Experiment 1
-
 This script checks server connectivity and verifies that the expected
 model is available through the OpenAI-compatible API
 """
@@ -10,16 +9,10 @@ from pathlib import Path
 import httpx
 from configs.loader import load_yaml
 
-CONFIG_PATH = Path("configs/experiments/exp1a_environment.yaml")
+CONFIG_PATH = Path("configs/server.yaml")
 
 
-def check_server(config: dict) -> None:
-    """
-    Check whether the vLLM server is reachable and serving the expected model
-
-    Args:
-        config: Experiment configuration
-    """
+def check_server(config):
     host = config["server"]["host"]
     port = config["server"]["port"]
     expected_model = config["model"]
@@ -33,8 +26,7 @@ def check_server(config: dict) -> None:
 
     try:
         response = httpx.get(
-            f"{base_url}/v1/models",
-            timeout=5.0,)
+            f"{base_url}/v1/models", timeout=5.0,)
     except httpx.RequestError as error:
         print("\nFAIL: Could not connect to vLLM server.")
         print(f"Error: {error}")
@@ -49,20 +41,13 @@ def check_server(config: dict) -> None:
 
     data = response.json()
     models = data.get("data", [])
-    model_names = [
-        model.get("id")
-        for model in models
-    ]
-
+    model_names = [model.get("id") for model in models]
     print(f"Available models: {model_names}")
 
     if expected_model in model_names:
         print(f"PASS: Expected model is available: {expected_model}")
     else:
-        print(
-            "FAIL: Expected model was not found: "
-            f"{expected_model}"
-        )
+        print(f"FAIL: Expected model was not found: {expected_model}")
 
 if __name__ == "__main__":
     config = load_yaml(CONFIG_PATH)
